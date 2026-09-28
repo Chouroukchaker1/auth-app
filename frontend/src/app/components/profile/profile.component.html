@@ -1,0 +1,69 @@
+<main class="auth-shell">
+  <section class="auth-card">
+    <div class="auth-header">
+      <span class="brand">P</span>
+      <h1>Mon profil</h1>
+    </div>
+
+    <p class="subtitle">Modifiez votre photo, votre nom, votre email ou votre mot de passe.</p>
+
+    @if (loading) {
+      <p class="status">Chargement...</p>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="photo-picker">
+          <span class="photo-picker__preview">
+            @if (photoPreviewUrl) {
+              <img [src]="photoPreviewUrl" alt="Photo de profil">
+            } @else {
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M3.5 21c0-4.5 3.8-7.4 8.5-7.4s8.5 2.9 8.5 7.4"/></svg>
+            }
+          </span>
+          <label class="photo-picker__button" for="photo">Changer la photo</label>
+          <input class="visually-hidden" id="photo" type="file" accept="image/*" (change)="onPhoto($event)">
+        </div>
+
+        <div class="field-group">
+          <label for="fullName">Nom complet</label>
+          <input id="fullName" type="text" formControlName="fullName" autocomplete="name">
+          @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
+            <small>Le nom complet est obligatoire.</small>
+          }
+        </div>
+
+        <div class="field-group">
+          <label for="email">Email</label>
+          <input id="email" type="email" formControlName="email" autocomplete="email">
+          @if (form.controls.email.touched && form.controls.email.invalid) {
+            <small>Adresse email invalide.</small>
+          }
+        </div>
+
+        <div class="field-group">
+          <label for="password">Nouveau mot de passe</label>
+          <input id="password" type="password" formControlName="password" placeholder="Laisser vide pour ne pas changer" autocomplete="new-password">
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <small>Le mot de passe doit contenir au moins 8 caractères.</small>
+          }
+        </div>
+
+        @if (error) {
+          <div class="error" role="alert">{{ error }}</div>
+        }
+
+        @if (success) {
+          <div class="success" role="status">{{ success }}</div>
+        }
+
+        <div class="form-actions">
+          <button class="submit-button" type="submit" [disabled]="saving">
+            {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
+          </button>
+          <button class="cancel-button" type="button" (click)="cancel()">Annuler</button>
+        </div>
+      </form>
+    }
+
+    <a class="back-link" routerLink="/dashboard">Retour au tableau de bord</a>
+  </section>
+</main>

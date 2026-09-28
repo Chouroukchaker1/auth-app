@@ -1,0 +1,174 @@
+<div class="dashboard-page" dir="rtl">
+  @if (loading) {
+    <p class="status">جارٍ التحميل...</p>
+  } @else {
+    <app-topbar [fullName]="fullName" [subtitle]="subtitle" [query]="query" (search)="setQuery($event)" />
+
+    <main>
+      @if (errorMessage) {
+        <div class="alert alert--error" role="alert"><span>{{ errorMessage }}</span><button type="button" (click)="errorMessage = null" aria-label="إغلاق / Fermer">×</button></div>
+      }
+      @if (successMessage) {
+        <div class="alert alert--success" role="status"><span>{{ successMessage }}</span><button type="button" (click)="successMessage = null" aria-label="إغلاق / Fermer">×</button></div>
+      }
+      <section class="welcome" aria-labelledby="dashboard-title">
+        <div class="welcome-ar">
+          <h1 id="dashboard-title">مرحبًا بك، {{ fullName }} 👋</h1>
+          <p>يمكنك من خلال هذه المنصة إدارة ومتابعة مختلف الخدمات والملفات</p>
+        </div>
+        <div class="welcome-fr" dir="ltr">
+          <h1>Bienvenue, {{ fullName }} 👋</h1>
+          <p>Cette plateforme vous permet de gérer et de suivre les différents services et dossiers.</p>
+        </div>
+      </section>
+
+      <section class="stats" aria-label="إحصائيات المستخدمين">
+        <article class="stat">
+          <div class="stat-top">
+            <div class="stat-head">
+              <span class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.5a3.5 3.5 0 0 1 0 7M18 14.3c2 .7 3.5 2.6 3.5 5.7"/></svg></span>
+              <div class="stat-label">الإطارات المشتركة<small>Cadres communs</small></div>
+            </div>
+            <span class="stat-dots" aria-hidden="true">···</span>
+          </div>
+          <div class="stat-value">{{ count('cadre') }}</div>
+        </article>
+        <article class="stat">
+          <div class="stat-top">
+            <div class="stat-head">
+              <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.3-7.5 9.5-4.3-1.2-7.5-4.9-7.5-9.5V6z"/></svg></span>
+              <div class="stat-label">الأمن المباشر<small>Sécurité active</small></div>
+            </div>
+            <span class="stat-dots" aria-hidden="true">···</span>
+          </div>
+          <div class="stat-value">{{ count('securite') }}</div>
+        </article>
+        <article class="stat">
+          <div class="stat-top">
+            <div class="stat-head">
+              <span class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="4"/><path d="M3 21c0-4 3.1-7 7-7 1.4 0 2.7.4 3.8 1.1M16 16l5 5M21 16l-5 5"/></svg></span>
+              <div class="stat-label">المتقاعدون<small>Retraités</small></div>
+            </div>
+            <span class="stat-dots" aria-hidden="true">···</span>
+          </div>
+          <div class="stat-value">{{ count('retraites') }}</div>
+        </article>
+      </section>
+
+      <section class="users" aria-labelledby="users-title">
+        <div class="users-head">
+          <h2 id="users-title">قائمة المستخدمين / Liste des utilisateurs</h2>
+          <label class="search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            <input type="search" placeholder="ابحث هنا... / Rechercher ici..." [value]="query" (input)="onQuery($event)">
+          </label>
+        </div>
+
+        <div class="users-card">
+          <div class="toolbar">
+            <div class="tabs" role="tablist">
+              @for (tab of tabs; track tab.key) {
+                <button type="button" role="tab" class="tab" [class.active]="activeTab === tab.key"
+                        [attr.aria-selected]="activeTab === tab.key" (click)="selectTab(tab.key)">
+                  {{ tab.ar }}<small>{{ tab.fr }}</small>
+                </button>
+              }
+            </div>
+
+            <div class="toolbar-actions">
+              <label class="status-filter">
+                <select aria-label="الحالة / Statut" (change)="onStatus($event)">
+                  <option value="">الحالة</option>
+                  @for (status of statuses; track status.value) {
+                    <option [value]="status.value">{{ status.label }}</option>
+                  }
+                </select>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+              </label>
+              <a class="btn-add" routerLink="/member">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6 1.4 0 2.6.3 3.6.9M18 14v6M15 17h6"/></svg>
+                إضافة مستخدم جديد
+              </a>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>الاسم واللقب<small>Nom et prénom</small></th>
+                  <th>بطاقة التعريف<small>CIN</small></th>
+                  <th>الرقم الموحّد<small>N° unique</small></th>
+                  <th>رقم الانخراط<small>N° d'adhésion</small></th>
+                  <th>الرتبة<small>Grade</small></th>
+                  <th>الحالة<small>Statut</small></th>
+                  <th>الإجراءات<small>Actions</small></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (user of pagedUsers; track user.id) {
+                  <tr>
+                    <td class="name">{{ user.fullName }}</td>
+                    <td>{{ user.cin }}</td>
+                    <td>{{ user.numeroUnique }}</td>
+                    <td>{{ user.numeroAdhesion }}</td>
+                    <td>{{ user.grade }}</td>
+                    <td>
+                      @if (user.status === 'active') {
+                        <span class="badge active">نشط/Actif</span>
+                      } @else {
+                        <span class="badge inactive">غير نشط/Inactif</span>
+                      }
+                    </td>
+                    <td>
+                      <div class="actions">
+                        <a class="icon-btn edit" routerLink="/member" [queryParams]="isAdmin && user.id !== 0 ? { id: user.id } : null" aria-label="Modifier la fiche">
+                          <svg viewBox="0 0 24 24"><path d="M21.17 6.81a2.82 2.82 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.36a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="M15 5l4 4"/></svg>
+                        </a>
+                        @if (isAdmin) {
+                          <button class="icon-btn delete" type="button" (click)="removeUser(user)" [disabled]="removingId === user.id" aria-label="Supprimer l'utilisateur">
+                            <svg viewBox="0 0 24 24"><path d="M5 8h14M9.5 8V6.5h5V8M7 8l.8 12.2a2 2 0 0 0 2 1.8h4.4a2 2 0 0 0 2-1.8L17 8M10.5 12v6M13.5 12v6"/></svg>
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="7" class="empty">لا يوجد مستخدمون / Aucun utilisateur</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <nav class="pager" aria-label="Pagination">
+            <div class="pager-pages">
+              <button type="button" class="pager-btn pager-nav" (click)="goTo(page - 1)" [disabled]="page === 1">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+                العودة
+              </button>
+              @for (n of pages; track $index) {
+                @if (n === 0) {
+                  <span class="pager-btn pager-gap">···</span>
+                } @else {
+                  <button type="button" class="pager-btn" [class.active]="n === page" (click)="goTo(n)"
+                          [attr.aria-current]="n === page ? 'page' : null">{{ n }}</button>
+                }
+              }
+              <button type="button" class="pager-btn pager-nav" (click)="goTo(page + 1)" [disabled]="page === pageCount">
+                التالي
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+              </button>
+            </div>
+
+            <label class="pager-jump">
+              الصفحة
+              <input type="number" min="1" [max]="pageCount" [value]="page" (change)="goTo($any($event.target).value)">
+            </label>
+          </nav>
+        </div>
+      </section>
+    </main>
+
+    <app-site-footer />
+  }
+</div>

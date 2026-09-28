@@ -1,0 +1,25 @@
+<header class="topbar">
+  <div class="topbar-user">
+    <img class="emblem" src="/images/White%202%20(1).png" alt="الشعار">
+    <a class="user-name" routerLink="/profile" aria-label="Modifier mon profil">
+      <strong>{{ fullName }}</strong>
+      <span>{{ subtitle }}</span>
+    </a>
+    <span class="topbar-divider" aria-hidden="true"></span>
+    <div class="last-login">
+      <strong>تاريخ آخر تسجيل دخول</strong>
+      <span>{{ lastLogin }}</span>
+    </div>
+  </div>
+
+  <div class="topbar-actions">
+    <label class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" placeholder="ابحث هنا... / Rechercher ici..." [value]="query" (input)="onInput($event)">
+    </label>
+    <span class="topbar-divider" aria-hidden="true"></span>
+    <button class="logout" type="button" (click)="logout()" aria-label="Se déconnecter">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4"/><path d="M14 7l5 5-5 5"/><path d="M19 12H8"/></svg>
+    </button>
+  </div>
+</header>

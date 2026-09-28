@@ -1,0 +1,212 @@
+:host { display: block; }
+
+.documents-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f7f7f7;
+  color: #111827;
+  font-family: 'Noto Sans Arabic', 'Manrope', sans-serif;
+}
+
+svg {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+main {
+  width: 100%;
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 32px 64px 48px;
+}
+
+/* ---------- Page title ---------- */
+.page-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
+}
+
+.page-title h1 {
+  margin: 0;
+  color: #111827;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 42px;
+}
+
+.page-title p {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 38px;
+}
+
+/* ---------- Card ---------- */
+.card {
+  overflow: hidden;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.card-head {
+  height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 8px 24px;
+  border-radius: 12px 12px 0 0;
+  background: #0082b1;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 100%;
+}
+
+.card-head .ico { width: 24px; height: 24px; }
+
+.card-head__divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.card-body {
+  padding: 44px;
+  border: 1px solid #e6e9ee;
+  border-top: 0;
+  border-radius: 0 0 12px 12px;
+}
+
+/* ---------- Table ---------- */
+.table-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+thead th {
+  height: 75px;
+  padding: 12px 24px;
+  border-block: 1px solid rgba(7, 109, 146, 0.35);
+  background: #d8f4fe;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 24px;
+  text-align: right;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+thead th:first-child { border-inline-start: 1px solid rgba(7, 109, 146, 0.35); border-start-start-radius: 8px; border-end-start-radius: 8px; }
+thead th:last-child { border-inline-end: 1px solid rgba(7, 109, 146, 0.35); border-start-end-radius: 8px; border-end-end-radius: 8px; }
+thead th span { display: block; font-size: 12px; font-weight: 500; line-height: 24px; }
+
+tbody td {
+  height: 63px;
+  padding: 13px 24px;
+  border-bottom: 1px solid #eff1f4;
+  background: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  text-align: right;
+  vertical-align: middle;
+}
+
+/* 24px gap between the header row and the first row */
+tbody tr:first-child td { border-top: 24px solid #ffffff; height: 87px; }
+
+td.name { max-width: 320px; overflow-wrap: anywhere; }
+td.size,
+td.date {
+  color: #374151;
+  font-weight: 400;
+  line-height: 100%;
+  text-align: right;
+}
+
+.pending {
+  display: block;
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.badge {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 4px 12px;
+  border-radius: 13px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge--financier { background: #e0f2fe; color: #076d92; }
+.badge--administratif { background: #f5f3ff; color: #6d28d9; }
+.badge--other { background: #f3f4f6; color: #4b5563; }
+
+.empty { color: #7a7f88; text-align: center; }
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #d9dde3;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.icon-btn svg { width: 24px; height: 24px; }
+.icon-btn--view { color: #054a63; }
+.icon-btn--danger { color: #ff0004; }
+.icon-btn:hover { background: #f5f6f8; }
+
+/* ---------- Messages & actions ---------- */
+.success {
+  padding: 12px 16px;
+  border: 1px solid #9fd8c1;
+  border-radius: 6px;
+  background: #ecfbf4;
+  color: #0f6b47;
+  font-size: 14px;
+}
+
+.error {
+  padding: 12px 16px;
+  border: 1px solid #e5a3a3;
+  border-radius: 6px;
+  background: #fdecec;
+  color: #a02525;
+  font-size: 14px;
+}
+
+@media (max-width: 1000px) {
+  main { padding: 24px 16px 40px; }
+  .card-body { padding: 24px 16px; }
+}

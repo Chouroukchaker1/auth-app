@@ -1,0 +1,94 @@
+<div class="auth-page">
+  <header class="site-header">
+    <img src="/images/Frame%201707479683.png" alt="Mutuelle du Corps de sécurité du Chef de l'État et des personnalités officielles">
+  </header>
+
+  <main class="auth-shell">
+    <div class="login" [attr.dir]="mode === 'login' ? 'rtl' : 'ltr'">
+      <header class="login-head">
+        <h1>{{ mode === 'login' ? 'تسجيل الدخول' : 'Inscription' }}</h1>
+        <p>{{ mode === 'login' ? 'يرجى إدخال بياناتك للوصول إلى بطاقتك الشخصية' : 'Créez votre compte pour commencer.' }}</p>
+      </header>
+
+      <section class="auth-card">
+        <form class="login-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        @if (mode === 'register') {
+          <div class="field-group">
+            <label for="fullName">Nom complet</label>
+            <input id="fullName" type="text" formControlName="fullName" placeholder="Votre nom complet" autocomplete="name">
+            @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
+              <small>Le nom complet est obligatoire.</small>
+            }
+          </div>
+
+          <div class="field-group photo-group">
+            <label for="photo">Photo de profil</label>
+            <div class="photo-picker">
+              <span class="photo-picker__preview">
+                @if (photoPreviewUrl) {
+                  <img [src]="photoPreviewUrl" alt="Aperçu de la photo">
+                } @else {
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M3.5 21c0-4.5 3.8-7.4 8.5-7.4s8.5 2.9 8.5 7.4"/></svg>
+                }
+              </span>
+              <label class="photo-picker__button" for="photo">Choisir une image</label>
+              <input class="visually-hidden" id="photo" type="file" accept="image/*" (change)="onPhoto($event)">
+            </div>
+          </div>
+        }
+
+        <div class="field-group">
+          <label for="email">
+            {{ mode === 'login' ? 'المعرّف به' : 'Email' }}
+            @if (mode === 'login') { <span class="required">*</span> }
+          </label>
+          <input id="email" type="email" formControlName="email" [placeholder]="mode === 'login' ? 'المعرّف به' : 'exemple@email.com'" autocomplete="email">
+          @if (form.controls.email.touched && form.controls.email.invalid) {
+            <small>Adresse email invalide.</small>
+          }
+        </div>
+
+        <div class="field-group">
+          <label for="password">
+            {{ mode === 'login' ? 'كلمة المرور' : 'Mot de passe' }}
+            @if (mode === 'login') { <span class="required">*</span> }
+          </label>
+          <input id="password" type="password" formControlName="password" [placeholder]="mode === 'login' ? 'كلمة المرور' : 'Minimum 8 caractères'" autocomplete="current-password">
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <small>Le mot de passe doit contenir au moins 8 caractères.</small>
+          }
+        </div>
+
+        @if (error) {
+          <div class="error" role="alert">{{ error }}</div>
+        }
+
+        @if (success) {
+          <div class="success" role="status">{{ success }}</div>
+        }
+
+        <button class="submit-button" type="submit" [disabled]="loading">
+          {{ loading ? 'Chargement...' : (mode === 'login' ? 'تسجيل الدخول' : 'Créer un compte') }}
+        </button>
+        </form>
+
+        @if (mode === 'login') {
+          <a class="forgot-link" routerLink="/forgot-password">هل نسيت كلمة المرور؟</a>
+        }
+
+        <p class="switch-link">
+          {{ mode === 'login' ? 'ليس لديك حساب؟' : 'Vous avez déjà un compte ?' }}
+          <button type="button" (click)="switchMode(mode === 'login' ? 'register' : 'login')">
+            {{ mode === 'login' ? 'إنشاء حساب' : 'Connexion' }}
+          </button>
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer" dir="rtl">
+    <span>تعاونية سلك أمن رئيس الدولة والشخصيات الرسمية</span>
+    <span class="footer-divider" aria-hidden="true"></span>
+    <span>جميع الحقوق محفوظة <span class="footer-year">© 2026</span></span>
+  </footer>
+</div>

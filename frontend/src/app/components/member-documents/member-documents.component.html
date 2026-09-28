@@ -1,0 +1,68 @@
+<div class="documents-page" dir="rtl">
+  <app-topbar [fullName]="session.fullName" [subtitle]="session.subtitle" />
+
+  <main>
+    <header class="page-title">
+      <h1>نوع الطلب : {{ requestType.ar }}</h1>
+      <p>Type de demande : {{ requestType.fr }}</p>
+    </header>
+
+    @if (errorMessage) { <div class="error" role="alert">{{ errorMessage }}</div> }
+    @if (successMessage) { <div class="success" role="status">{{ successMessage }}</div> }
+
+    <section class="card" aria-labelledby="files-title">
+      <h2 class="card-head" id="files-title">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.6 2.8H6.8a2 2 0 0 0-2 2v14.4a2 2 0 0 0 2 2h10.4a2 2 0 0 0 2-2V8.4z"/><path d="M13.6 2.8v5.6h5.6M8 13h8M8 16.4h8"/></svg>
+        <span class="card-head__divider" aria-hidden="true"></span>
+        الملفات المرفقة / Fichiers joints
+      </h2>
+
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>اسم الملف<span>Nom du fichier</span></th>
+                <th>النوع<span>Type</span></th>
+                <th>الحجم<span>Taille</span></th>
+                <th>تاريخ الإضافة<span>Date d'ajout</span></th>
+                <th>الإجراءات<span>Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (loading) {
+                <tr><td colspan="5" class="empty">جارٍ التحميل... / Chargement...</td></tr>
+              } @else {
+                @for (row of rows; track row) {
+                  <tr>
+                    <td class="name">
+                      {{ row.name }}
+                      @if (row.file) { <small class="pending">غير محفوظ / Non enregistré</small> }
+                    </td>
+                    <td><span class="badge" [class]="'badge badge--' + row.tone">{{ row.type }}</span></td>
+                    <td class="size" dir="ltr">{{ row.size }}</td>
+                    <td class="date" dir="ltr">{{ row.date }}</td>
+                    <td>
+                      <div class="actions">
+                        <button class="icon-btn icon-btn--view" type="button" (click)="view(row)" aria-label="Afficher le document">
+                          <svg viewBox="0 0 24 24"><path d="M2.1 12.3a1 1 0 0 1 0-.6C3.5 7.6 7.4 5 12 5s8.5 2.6 9.9 6.7a1 1 0 0 1 0 .6C20.5 16.4 16.6 19 12 19s-8.5-2.6-9.9-6.7z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                        <button class="icon-btn icon-btn--danger" type="button" (click)="remove(row)" aria-label="Supprimer le document">
+                          <svg viewBox="0 0 24 24"><path d="M5 8h14M9.5 8V6.5h5V8M7 8l.8 12.2a2 2 0 0 0 2 1.8h4.4a2 2 0 0 0 2-1.8L17 8M10.5 12v6M13.5 12v6"/></svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="5" class="empty">لا توجد وثائق / Aucun document</td></tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <app-site-footer />
+</div>

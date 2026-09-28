@@ -1,0 +1,16 @@
+<main class="verify-shell">
+  <section class="verify-card">
+    <span class="brand">A</span>
+    <h1>Validation de l’adresse email</h1>
+    @if (loading) {
+      <p>Validation en cours...</p>
+    } @else {
+      <p [class.success]="verified" [class.error]="!verified">{{ message }}</p>
+      @if (verified) {
+        <a class="action-link" routerLink="/auth">Aller à la connexion</a>
+      } @else {
+        <a class="action-link" routerLink="/auth">Retour à la connexion</a>
+      }
+    }
+  </section>
+</main>

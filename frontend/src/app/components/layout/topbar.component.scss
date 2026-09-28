@@ -1,0 +1,128 @@
+:host { display: block; }
+
+.topbar {
+  width: 100%;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 48px;
+  background: #054a63;
+  color: #ffffff;
+  font-family: 'Noto Sans Arabic', sans-serif;
+  direction: ltr;
+}
+
+.topbar-user,
+.topbar-actions {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.emblem {
+  width: 41px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.topbar-divider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.user-name,
+.last-login {
+  height: 39px;
+  display: flex;
+  flex-direction: column;
+  direction: rtl;
+  text-align: right;
+  color: inherit;
+  text-decoration: none;
+}
+
+.user-name { min-width: 88px; }
+.last-login { min-width: 154px; }
+
+.user-name strong,
+.last-login strong {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 19px;
+}
+
+.user-name span,
+.last-login span {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 19px;
+}
+
+.search {
+  width: 350px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 16px;
+  border: 1px solid #dedede;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #9ca3af;
+  direction: rtl;
+}
+
+.search:focus-within { border-color: #0082b1; }
+
+.search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #1b1f27;
+  font-family: 'Noto Sans Arabic', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 100%;
+}
+
+.search input::placeholder { color: #9ca3af; }
+
+.logout {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.logout:hover { opacity: 0.8; }
+
+svg {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.67;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 1100px) {
+  .topbar { padding: 10px 16px; }
+  .search { width: 240px; }
+}
+
+@media (max-width: 700px) {
+  .topbar { height: auto; flex-wrap: wrap; gap: 8px; }
+  .last-login, .topbar-user .topbar-divider, .search { display: none; }
+}

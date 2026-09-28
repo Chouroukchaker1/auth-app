@@ -1,0 +1,119 @@
+<main class="users-shell">
+  <header class="topbar">
+    <a class="brand" routerLink="/dashboard">Mon espace</a>
+    <a class="back-link" routerLink="/dashboard">Retour au tableau de bord</a>
+  </header>
+
+  <section class="users-content" aria-labelledby="users-title">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">ADMINISTRATION</p>
+        <h1 id="users-title">Utilisateurs</h1>
+        <p class="subtitle">Créez, modifiez ou supprimez les comptes de l’application.</p>
+      </div>
+      <div class="heading-actions">
+        <button class="secondary-button" type="button" (click)="startCreate()">Nouvel utilisateur</button>
+        <button class="export-button pdf-button" type="button" (click)="exportPdf()" [disabled]="loading || users.length === 0" title="Exporter les utilisateurs en PDF" aria-label="Exporter les utilisateurs en PDF">
+          <span class="file-icon" aria-hidden="true"><span>PDF</span></span> PDF
+        </button>
+        <button class="export-button excel-button" type="button" (click)="exportExcel()" [disabled]="loading || users.length === 0" title="Exporter les utilisateurs en Excel" aria-label="Exporter les utilisateurs en Excel">
+          <span class="file-icon" aria-hidden="true"><span>XLS</span></span> Excel
+        </button>
+      </div>
+    </div>
+
+    @if (error) {
+      <div class="error" role="alert">{{ error }}</div>
+    }
+    @if (success) {
+      <div class="success" role="status">{{ success }}</div>
+    }
+
+    <section class="user-form" aria-labelledby="form-title">
+      <h2 id="form-title">{{ editingId === null ? 'Créer un utilisateur' : 'Modifier l’utilisateur' }}</h2>
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="form-grid">
+          <div class="field-group">
+            <label for="fullName">Nom complet</label>
+            <input id="fullName" type="text" formControlName="fullName" autocomplete="name">
+            @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
+              <small>Le nom complet est obligatoire.</small>
+            }
+          </div>
+
+          <div class="field-group">
+            <label for="email">Email</label>
+            <input id="email" type="email" formControlName="email" autocomplete="email">
+            @if (form.controls.email.touched && form.controls.email.invalid) {
+              <small>Adresse email invalide.</small>
+            }
+          </div>
+
+          <div class="field-group">
+            <label for="password">Mot de passe {{ editingId === null ? '' : '(facultatif)' }}</label>
+            <input id="password" type="password" formControlName="password" autocomplete="new-password">
+            @if (form.controls.password.touched && form.controls.password.invalid) {
+              <small>Minimum 8 caractères.</small>
+            }
+          </div>
+
+          <div class="field-group">
+            <label for="role">Rôle</label>
+            <select id="role" formControlName="role">
+              <option value="USER">Utilisateur</option>
+              <option value="ADMIN">Administrateur</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          @if (editingId !== null) {
+            <button class="secondary-button" type="button" (click)="cancelEdit()">Annuler</button>
+          }
+          <button class="primary-button" type="submit" [disabled]="saving">
+            {{ saving ? 'Enregistrement...' : (editingId === null ? 'Créer' : 'Enregistrer') }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="users-list" aria-labelledby="list-title">
+      <div class="list-heading">
+        <h2 id="list-title">Comptes enregistrés</h2>
+        <span>{{ users.length }} utilisateur{{ users.length > 1 ? 's' : '' }}</span>
+      </div>
+
+      @if (loading) {
+        <p class="status">Chargement...</p>
+      } @else if (users.length === 0) {
+        <p class="status">Aucun utilisateur enregistré.</p>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of users; track user.id) {
+                <tr>
+                  <td data-label="Nom">{{ user.fullName }}</td>
+                  <td data-label="Email">{{ user.email }}</td>
+                  <td data-label="Rôle"><span class="role">{{ user.role }}</span></td>
+                  <td class="actions" data-label="Actions">
+                    <button class="text-button" type="button" (click)="startEdit(user)">Modifier</button>
+                    <button class="delete-button" type="button" (click)="remove(user)">Supprimer</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  </section>
+</main>
