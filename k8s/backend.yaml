@@ -36,7 +36,7 @@ spec:
                 name: auth-app-config
           env:
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres:5432/$(POSTGRES_DB)
+              value: jdbc:postgresql://postgres:5432/authdb
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
