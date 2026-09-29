@@ -7,13 +7,13 @@ pipeline {
     }
 
     stages {
-        stage('Build and test backend') {
+        stage('Test') {
             steps {
                 script {
                     if (isUnix()) {
-                        sh 'mvn -B clean verify'
+                        sh 'mvn -B test'
                     } else {
-                        bat 'mvn -B clean verify'
+                        bat 'mvn -B test'
                     }
                 }
             }
@@ -24,17 +24,38 @@ pipeline {
             }
         }
 
-        stage('Deploy backend') {
+        stage('Build image') {
             steps {
                 script {
-                    if (isUnix()) {
-                        sh 'docker compose config --quiet'
-                        sh 'docker compose up -d --build --wait postgres backend'
-                    } else {
-                        bat 'docker compose config --quiet'
-                        bat 'docker compose up -d --build --wait postgres backend'
-                    }
+                    sh 'docker build -f Dockerfile -t chouroukchaker/auth-app-backend:$BUILD_NUMBER -t chouroukchaker/auth-app-backend:latest .'
                 }
+            }
+        }
+
+        stage('Push image') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'DOCKERHUB_USERNAME',
+                    passwordVariable: 'DOCKERHUB_PASSWORD'
+                )]) {
+                    sh '''set +x
+DOCKER_CONFIG="$(mktemp -d)"
+export DOCKER_CONFIG
+trap 'rm -rf "$DOCKER_CONFIG"' EXIT
+test "$DOCKERHUB_USERNAME" = "chouroukchaker"
+printf '%s' "$DOCKERHUB_PASSWORD" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
+docker push chouroukchaker/auth-app-backend:$BUILD_NUMBER
+docker push chouroukchaker/auth-app-backend:latest'''
+                }
+            }
+        }
+
+        stage('Deploy backend') {
+            steps {
+                sh '''IMAGE_TAG="$BUILD_NUMBER" docker compose config --quiet
+IMAGE_TAG="$BUILD_NUMBER" docker compose pull backend
+IMAGE_TAG="$BUILD_NUMBER" docker compose up -d --no-build --wait postgres backend'''
             }
         }
     }

@@ -21,6 +21,7 @@ services:
       retries: 10
 
   backend:
+    image: chouroukchaker/auth-app-backend:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: Dockerfile
@@ -51,6 +52,7 @@ services:
         condition: service_healthy
 
   frontend:
+    image: chouroukchaker/auth-app-frontend:${IMAGE_TAG:-latest}
     build:
       context: ./frontend
       dockerfile: Dockerfile

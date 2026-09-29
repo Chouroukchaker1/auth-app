@@ -7,33 +7,45 @@ pipeline {
     }
 
     stages {
-        stage('Build frontend') {
+        stage('Test') {
             steps {
                 dir('frontend') {
-                    script {
-                        if (isUnix()) {
-                            sh 'npm ci'
-                            sh 'npm run build'
-                        } else {
-                            bat 'npm ci'
-                            bat 'npm run build'
-                        }
-                    }
+                    sh 'npm ci'
+                    sh 'npm test --if-present'
+                }
+            }
+        }
+
+        stage('Build image') {
+            steps {
+                sh 'docker build -f frontend/Dockerfile -t chouroukchaker/auth-app-frontend:$BUILD_NUMBER -t chouroukchaker/auth-app-frontend:latest frontend'
+            }
+        }
+
+        stage('Push image') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'DOCKERHUB_USERNAME',
+                    passwordVariable: 'DOCKERHUB_PASSWORD'
+                )]) {
+                    sh '''set +x
+DOCKER_CONFIG="$(mktemp -d)"
+export DOCKER_CONFIG
+trap 'rm -rf "$DOCKER_CONFIG"' EXIT
+test "$DOCKERHUB_USERNAME" = "chouroukchaker"
+printf '%s' "$DOCKERHUB_PASSWORD" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
+docker push chouroukchaker/auth-app-frontend:$BUILD_NUMBER
+docker push chouroukchaker/auth-app-frontend:latest'''
                 }
             }
         }
 
         stage('Deploy frontend') {
             steps {
-                script {
-                    if (isUnix()) {
-                        sh 'docker compose config --quiet'
-                        sh 'docker compose up -d --build --no-deps --wait frontend'
-                    } else {
-                        bat 'docker compose config --quiet'
-                        bat 'docker compose up -d --build --no-deps --wait frontend'
-                    }
-                }
+                sh '''IMAGE_TAG="$BUILD_NUMBER" docker compose config --quiet
+IMAGE_TAG="$BUILD_NUMBER" docker compose pull frontend
+IMAGE_TAG="$BUILD_NUMBER" docker compose up -d --no-build --no-deps --wait frontend'''
             }
         }
     }

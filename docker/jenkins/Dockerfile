@@ -17,7 +17,13 @@ RUN apt-get update \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian ${VERSION_CODENAME} stable" \
         > /etc/apt/sources.list.d/docker.list \
     && apt-get update \
-    && apt-get install -y --no-install-recommends maven nodejs docker-ce-cli docker-compose-plugin \
+    && apt-get install -y --no-install-recommends maven nodejs docker-ce-cli docker-compose-plugin chromium \
     && rm -rf /var/lib/apt/lists/*
+
+RUN printf '%s\n' '#!/bin/sh' 'exec /usr/bin/chromium --no-sandbox --disable-dev-shm-usage "$@"' \
+    > /usr/local/bin/chromium-headless \
+    && chmod +x /usr/local/bin/chromium-headless
+
+ENV CHROME_BIN=/usr/local/bin/chromium-headless
 
 USER jenkins

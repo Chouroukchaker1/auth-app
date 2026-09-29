@@ -75,6 +75,8 @@
         "test": {
           "builder": "@angular/build:karma",
           "options": {
+            "watch": false,
+            "browsers": "ChromeHeadless",
             "polyfills": [
               "zone.js",
               "zone.js/testing"
