@@ -1,0 +1,40 @@
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage('Build frontend') {
+            steps {
+                dir('frontend') {
+                    script {
+                        if (isUnix()) {
+                            sh 'npm ci'
+                            sh 'npm run build'
+                        } else {
+                            bat 'npm ci'
+                            bat 'npm run build'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Deploy frontend') {
+            steps {
+                script {
+                    if (isUnix()) {
+                        sh 'docker compose config --quiet'
+                        sh 'docker compose up -d --build --no-deps --wait frontend'
+                    } else {
+                        bat 'docker compose config --quiet'
+                        bat 'docker compose up -d --build --no-deps --wait frontend'
+                    }
+                }
+            }
+        }
+    }
+}

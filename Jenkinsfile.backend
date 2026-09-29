@@ -17,6 +17,11 @@ pipeline {
                     }
                 }
             }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
+                }
+            }
         }
 
         stage('Deploy backend') {
@@ -30,16 +35,6 @@ pipeline {
                         bat 'docker compose up -d --build --wait postgres backend'
                     }
                 }
-            }
-        }
-    }
-
-    post {
-        always {
-            junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
-        }
-    }
-}
             }
         }
     }
