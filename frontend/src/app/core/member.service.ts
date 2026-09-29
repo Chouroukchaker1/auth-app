@@ -71,7 +71,7 @@ export interface MemberFormPayload {
 @Injectable({ providedIn: 'root' })
 export class MemberService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/members';
+  private readonly apiUrl = '/api/members';
 
   list(): Observable<MemberSummary[]> {
     return this.http.get<MemberSummary[]>(this.apiUrl);

@@ -21,7 +21,7 @@ export interface User {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api';
+  private readonly apiUrl = '/api';
   private readonly tokenKey = 'auth_token';
   private readonly lastLoginKey = 'last_login_at';
 
