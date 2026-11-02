@@ -1,0 +1,82 @@
+# Analyse de document (document-analysis/api.py), appelée par le backend sur http://document-analysis:8501.
+# Le modèle (~7,5 Go) est téléchargé au premier démarrage dans le volume analysis-models.
+# Version CPU : prévoir ~14 Go de mémoire. Carte NVIDIA (plugin nvidia-device-plugin installé) :
+# image construite avec TORCH_INDEX=.../cu126 et décommenter la limite nvidia.com/gpu ci-dessous.
+apiVersion: v1
+kind: Service
+metadata:
+  name: document-analysis
+  namespace: auth-app
+spec:
+  selector:
+    app: document-analysis
+  ports:
+    - port: 8501
+      targetPort: 8501
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: document-analysis
+  namespace: auth-app
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # un seul pod à la fois : le volume du modèle est en ReadWriteOnce
+  selector:
+    matchLabels:
+      app: document-analysis
+  template:
+    metadata:
+      labels:
+        app: document-analysis
+    spec:
+      containers:
+        - name: document-analysis
+          image: chouroukchaker/auth-app-analysis:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8501
+          env:
+            - name: OCR_HOST
+              value: 0.0.0.0
+            - name: HF_HOME
+              value: /models
+          resources:
+            requests:
+              memory: 4Gi
+              cpu: "1"
+            limits:
+              memory: 16Gi
+              # nvidia.com/gpu: 1
+          volumeMounts:
+            - name: analysis-models
+              mountPath: /models
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8501
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8501
+            initialDelaySeconds: 60
+            periodSeconds: 30
+      volumes:
+        - name: analysis-models
+          persistentVolumeClaim:
+            claimName: analysis-models
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: analysis-models
+  namespace: auth-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi

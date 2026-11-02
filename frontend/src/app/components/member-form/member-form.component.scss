@@ -58,10 +58,20 @@ main {
 /* ---------- Page title ---------- */
 .page-title {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   text-align: right;
 }
+
+.page-title__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.btn--scan { height: 38px; padding: 6px 16px; font-size: 14px; }
 
 .page-title h1 {
   margin: 0;

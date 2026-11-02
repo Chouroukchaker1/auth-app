@@ -45,8 +45,16 @@ services:
       MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-true}
       MAIL_FROM: ${MAIL_FROM:-no-reply@example.com}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4200}
+      APP_UPLOAD_DIR: /app/uploads
+      # Analyse de document : service « document-analysis » ci-dessous (profil analyse),
+      # ou service lancé directement sur le PC : OCR_SERVICE_URL=http://host.docker.internal:8501
+      OCR_SERVICE_URL: ${OCR_SERVICE_URL:-http://document-analysis:8501}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8080:8080"
+    volumes:
+      - ./uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,5 +69,23 @@ services:
     ports:
       - "4200:80"
 
+  # Lancé seulement avec : docker compose --profile analyse up -d
+  # Carte NVIDIA : docker compose -f docker-compose.yml -f docker-compose.gpu.yml --profile analyse up -d
+  document-analysis:
+    image: chouroukchaker/auth-app-analysis:${IMAGE_TAG:-latest}
+    build:
+      context: ./document-analysis
+      dockerfile: Dockerfile
+    container_name: auth-app-analysis
+    restart: unless-stopped
+    profiles: ["analyse"]
+    ports:
+      - "8501:8501"
+    volumes:
+      - analysis_models:/models
+      - analysis_results:/app/resultats
+
 volumes:
   postgres_data:
+  analysis_models:
+  analysis_results:

@@ -11,6 +11,7 @@ import {
 import {
   CITIES, FILE_TYPES, GRADES, MARITAL_STATUSES, Option, RELATIONS, SERVICE_TYPES, STATUSES, optionLabel
 } from '../../core/member-options';
+import { OcrResult, matchOption } from '../../core/ocr-import';
 import { SiteFooterComponent } from '../layout/site-footer.component';
 import { TopbarComponent } from '../layout/topbar.component';
 
@@ -447,6 +448,12 @@ export class MemberFormComponent implements OnInit {
       missing.push(this.fieldLabels['dateMariage']);
     }
 
+    // Members imported from a scanned document skip addMember()'s checks: relation or birth date may be missing.
+    const incomplete = this.members.filter(m => !m.lien || !m.dateNaissance).map(m => `${m.nom} ${m.prenom}`.trim());
+    if (incomplete.length) {
+      missing.push(`أفراد العائلة (الصفة وتاريخ الولادة) / Membres de la famille à compléter (lien, date de naissance) : ${incomplete.join('، ')}`);
+    }
+
     if (!this.photoFile && !this.hasSavedPhoto) missing.push('صورة المنخرط / Photo');
     this.cardSlots.forEach(slot => {
       if (!slot.file && !this.hasSavedCard[slot.key]) missing.push(`${slot.labelAr} / ${slot.labelFr}`);
@@ -530,14 +537,29 @@ export class MemberFormComponent implements OnInit {
       this.restoreDraft();
       return;
     }
-    this.form.patchValue(carried.form as ReturnType<MemberFormComponent['form']['getRawValue']>);
-    this.members = carried.members as FamilyMember[];
-    this.marriedSeveralTimes = carried.marriedSeveralTimes;
+    // No form state when the analysis page was opened on its own: only the values read are applied.
+    if (carried.form) {
+      this.form.patchValue(carried.form as ReturnType<MemberFormComponent['form']['getRawValue']>);
+      this.members = carried.members as FamilyMember[];
+      this.marriedSeveralTimes = carried.marriedSeveralTimes;
+    }
     carried.pendingFiles.forEach(({ file, addedAt }) => this.attachments.push({ name: file.name, size: this.humanSize(file.size), file, addedAt }));
+    if (carried.ocrResult) this.applyOcr(carried.ocrResult);
   }
 
   /** Opens the attached-files page, keeping everything not yet saved. */
   openDocuments(): void {
+    this.keepDraft();
+    this.router.navigate(['/member/documents'], { queryParams: this.memberId ? { id: this.memberId } : {} });
+  }
+
+  /** Opens the document-analysis page; its "fill the form" button brings the values read back here. */
+  openAnalysis(): void {
+    this.keepDraft();
+    this.router.navigate(['/member/analyse'], { queryParams: this.memberId ? { id: this.memberId } : {} });
+  }
+
+  private keepDraft(): void {
     const raw = this.form.getRawValue();
     this.drafts.keep({
       memberId: this.memberId,
@@ -550,7 +572,62 @@ export class MemberFormComponent implements OnInit {
         .filter(attachment => attachment.file)
         .map(attachment => ({ file: attachment.file as File, typeFichier: raw.documents.typeFichier, addedAt: attachment.addedAt ?? localNow() }))
     });
-    this.router.navigate(['/member/documents'], { queryParams: this.memberId ? { id: this.memberId } : {} });
+  }
+
+  /** Fills the form with the values read on the document; empty readings leave fields untouched. */
+  private applyOcr(result: OcrResult): void {
+    const { fields } = result;
+    const filled: string[] = [];
+    const unmatched: string[] = [];
+    const set = (path: string, key: string, value: string | undefined) => {
+      const control = this.form.get(path);
+      if (!control || !value) return;
+      control.setValue(value);
+      control.markAsTouched();
+      control.markAsDirty();
+      filled.push(this.fieldLabels[key]);
+    };
+
+    set('personal.numeroUnifie', 'numeroUnifie', fields.numeroUnifie);
+    set('personal.cnr', 'cnr', fields.cnr);
+    set('personal.numeroAffiliation', 'numeroAffiliation', fields.numeroAffiliation);
+    set('member.nomPrenom', 'nomPrenom', fields.nomPrenom);
+    set('member.dateNaissance', 'dateNaissance', fields.dateNaissance);
+    set('member.debutActivite', 'debutActivite', fields.debutActivite);
+    set('familyForm.dateMariage', 'dateMariage', fields.dateMariage);
+
+    const grade = matchOption(this.grades, fields.grade);
+    if (grade) set('member.grade', 'grade', grade.value);
+    else if (fields.grade) unmatched.push(`${this.fieldLabels['grade']} : « ${fields.grade} »`);
+    const city = matchOption(this.cities, fields.lieuNaissance);
+    if (city) set('member.lieuNaissance', 'lieuNaissance', city.value);
+    else if (fields.lieuNaissance) unmatched.push(`${this.fieldLabels['lieuNaissance']} : « ${fields.lieuNaissance} »`);
+
+    let added = 0;
+    result.family.forEach(person => {
+      const exists = this.members.some(m => m.nom.trim() === person.nom.trim() && m.prenom.trim() === person.prenom.trim());
+      if (exists || !person.nom) return;
+      const known = this.relations.some(option => option.value === person.lienParente);
+      this.members.push({
+        nom: person.nom,
+        prenom: person.prenom,
+        lien: known ? person.lienParente : '',
+        lienLabel: known ? optionLabel(this.relations, person.lienParente).split(' /')[0] : '—',
+        dateNaissance: person.dateNaissance
+      });
+      added++;
+    });
+    if (added) filled.push(`أفراد العائلة / Membres de la famille (${added})`);
+
+    if (!filled.length && !unmatched.length) {
+      this.showError("لم يتم العثور على أي قيمة في الوثيقة / Aucune valeur exploitable n'a été lue sur le document.");
+      return;
+    }
+    this.errorMessage = null;
+    this.saved = true;
+    this.savedMessage = `تم ملء الحقول من الوثيقة، يرجى التثبت منها / Rempli depuis le document, à vérifier : ${filled.join('، ')}`
+      + (unmatched.length ? ` — غير موجود في القائمة / Absent des listes : ${unmatched.join('، ')}` : '');
+    setTimeout(() => document.querySelector('.member-page .success')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
   }
 
   saveDraft(): void {

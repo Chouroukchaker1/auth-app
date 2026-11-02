@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { OcrResult } from './ocr-import';
 
 export interface PendingFile {
   file: File;
@@ -16,7 +17,8 @@ export function localNow(): string {
 
 /**
  * Unsaved state of the member form, carried across a round trip to the
- * documents page (/member/documents) so nothing typed or picked is lost.
+ * documents page (/member/documents) or the analysis page (/member/analyse)
+ * so nothing typed or picked is lost.
  * Lives in memory only: a page reload drops it.
  */
 export interface MemberFormState {
@@ -28,6 +30,8 @@ export interface MemberFormState {
   marriedSeveralTimes: 'oui' | 'non' | null;
   statut: string;
   pendingFiles: PendingFile[];
+  /** Values read on a document, applied to the form when it reopens. */
+  ocrResult?: OcrResult;
 }
 
 @Injectable({ providedIn: 'root' })

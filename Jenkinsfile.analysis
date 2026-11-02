@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage('Build image') {
+            steps {
+                sh 'docker build -f document-analysis/Dockerfile -t chouroukchaker/auth-app-analysis:$BUILD_NUMBER -t chouroukchaker/auth-app-analysis:latest document-analysis'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                // Tests sans le modèle : libellés, dates, conversion vers le formulaire, ouverture des fichiers
+                sh 'docker run --rm chouroukchaker/auth-app-analysis:$BUILD_NUMBER python test_analysis.py'
+            }
+        }
+
+        stage('Push image') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'DOCKERHUB_USERNAME',
+                    passwordVariable: 'DOCKERHUB_PASSWORD'
+                )]) {
+                    sh '''set +x
+DOCKER_CONFIG="$(mktemp -d)"
+export DOCKER_CONFIG
+trap 'rm -rf "$DOCKER_CONFIG"' EXIT
+test "$DOCKERHUB_USERNAME" = "chouroukchaker"
+printf '%s' "$DOCKERHUB_PASSWORD" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
+docker push chouroukchaker/auth-app-analysis:$BUILD_NUMBER
+docker push chouroukchaker/auth-app-analysis:latest'''
+                }
+            }
+        }
+
+        stage('Deploy document analysis') {
+            steps {
+                sh '''IMAGE_TAG="$BUILD_NUMBER" docker compose --profile analyse config --quiet
+IMAGE_TAG="$BUILD_NUMBER" docker compose --profile analyse pull document-analysis
+IMAGE_TAG="$BUILD_NUMBER" docker compose --profile analyse up -d --no-build --no-deps --wait document-analysis'''
+            }
+        }
+    }
+}

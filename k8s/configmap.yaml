@@ -11,3 +11,4 @@ data:
   MAIL_SMTP_AUTH: "true"
   MAIL_SMTP_STARTTLS: "true"
   MAIL_FROM: no-reply@example.com
+  OCR_SERVICE_URL: http://document-analysis:8501

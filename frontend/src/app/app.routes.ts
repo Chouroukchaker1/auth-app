@@ -7,6 +7,7 @@ import { UserManagementComponent } from './components/user-management/user-manag
 import { VerifyEmailComponent } from './components/verify-email/verify-email.component';
 import { MemberFormComponent } from './components/member-form/member-form.component';
 import { MemberDocumentsComponent } from './components/member-documents/member-documents.component';
+import { DocumentAnalysisComponent } from './components/document-analysis/document-analysis.component';
 import { ProfileComponent } from './components/profile/profile.component';
 import { LandingPageComponent } from './components/landing-page/landing-page.component';
 import { adminGuard } from './core/admin.guard';
@@ -23,6 +24,7 @@ export const routes: Routes = [
 	{ path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
 	{ path: 'member', component: MemberFormComponent, canActivate: [authGuard] },
 	{ path: 'member/documents', component: MemberDocumentsComponent, canActivate: [authGuard] },
+	{ path: 'member/analyse', component: DocumentAnalysisComponent, canActivate: [authGuard] },
 	{ path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
 	{ path: '**', redirectTo: '' }
 ];

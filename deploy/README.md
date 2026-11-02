@@ -49,6 +49,18 @@ sudo kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.dat
 
 ## 4. Deploy image updates
 
-Jenkins currently publishes versioned images to Docker Hub but does not update Kubernetes manifests. After a successful image push, update the image tags in `k8s/backend.yaml` and/or `k8s/frontend.yaml` to the Jenkins build number and push that Git change; Argo CD will roll out the new version. Do not rely on re-pushing `latest` alone because Argo CD detects Git changes, not registry changes.
+Three Jenkins pipelines publish versioned images to Docker Hub:
+
+| Jenkinsfile | Image |
+|---|---|
+| `Jenkinsfile.backend` | `chouroukchaker/auth-app-backend` |
+| `Jenkinsfile.frontend` | `chouroukchaker/auth-app-frontend` |
+| `Jenkinsfile.analysis` | `chouroukchaker/auth-app-analysis` (document analysis) |
+
+Create one Jenkins pipeline job per file (Pipeline script from SCM, same repository, "Script Path" set to the file name). They do not update Kubernetes manifests: after a successful image push, update the image tag in `k8s/backend.yaml`, `k8s/frontend.yaml` and/or `k8s/document-analysis.yaml` to the Jenkins build number and push that Git change; Argo CD will roll out the new version. Do not rely on re-pushing `latest` alone because Argo CD detects Git changes, not registry changes.
+
+## 5. Document analysis
+
+`k8s/document-analysis.yaml` runs the analysis service; the backend reaches it through `OCR_SERVICE_URL` in `k8s/configmap.yaml`. The model (~7.5 GB) is downloaded on first start into the 20 GiB `analysis-models` volume. On CPU it needs about 14 GB of RAM and several minutes per document. For an NVIDIA GPU, install the NVIDIA device plugin, build the image with `--build-arg TORCH_INDEX=https://download.pytorch.org/whl/cu126` and uncomment the `nvidia.com/gpu` limit.
 
 The NodePort setup is intended for initial testing. For an internet-facing production deployment, add a DNS name, HTTPS ingress, backups for the PostgreSQL volume, and a secret-management workflow.

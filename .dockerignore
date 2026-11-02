@@ -3,3 +3,5 @@ target
 .idea
 frontend/node_modules
 frontend/dist
+document-analysis
+uploads

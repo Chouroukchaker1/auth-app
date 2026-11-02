@@ -37,6 +37,8 @@ spec:
           env:
             - name: SPRING_DATASOURCE_URL
               value: jdbc:postgresql://postgres:5432/$(POSTGRES_DB)
+            - name: APP_UPLOAD_DIR
+              value: /app/uploads
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -82,6 +84,9 @@ spec:
                   name: auth-app-secrets
                   key: MAIL_PASSWORD
                   optional: true
+          volumeMounts:
+            - name: member-uploads
+              mountPath: /app/uploads
           readinessProbe:
             tcpSocket:
               port: 8080
@@ -92,3 +97,19 @@ spec:
               port: 8080
             initialDelaySeconds: 60
             periodSeconds: 20
+      volumes:
+        - name: member-uploads
+          persistentVolumeClaim:
+            claimName: member-uploads
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: member-uploads
+  namespace: auth-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

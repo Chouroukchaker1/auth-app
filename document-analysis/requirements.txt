@@ -1,0 +1,20 @@
+# Analyse de document (Nanonets-OCR2-3B en local) - versions testées
+# torch / torchvision : installés à part, version CPU ou CUDA (voir README.md et Dockerfile)
+transformers==5.19.0
+accelerate==1.15.0
+bitsandbytes==0.50.2
+numpy==2.5.3
+opencv-python-headless==4.14.0.94
+pillow==12.3.0
+psutil==7.2.2
+# service HTTP appelé par le backend
+starlette==1.3.1
+uvicorn==0.54.0
+python-multipart==0.0.32
+# lecture des PDF
+pypdfium2==5.14.0
+# exports Excel / PDF (scan_document.py)
+openpyxl==3.1.5
+reportlab==5.0.1
+arabic-reshaper==3.0.1
+python-bidi==0.6.11

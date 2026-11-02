@@ -1,0 +1,14 @@
+# Analyse de document sur la carte graphique NVIDIA (pilote + NVIDIA Container Toolkit requis) :
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml --profile analyse up -d --build
+services:
+  document-analysis:
+    build:
+      args:
+        TORCH_INDEX: https://download.pytorch.org/whl/cu126
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

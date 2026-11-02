@@ -29,8 +29,10 @@ public class MemberDocument {
     private String contentType;
     private long size;
 
-    @Column(columnDefinition = "bytea")
-    private byte[] content;
+    @Column(name = "content", columnDefinition = "bytea")
+    private byte[] legacyContent;
+    @Column(name = "storage_key")
+    private String storageKey;
 
     /** When the file was uploaded; null for documents stored before this column existed. */
     private LocalDateTime createdAt;
@@ -45,13 +47,13 @@ public class MemberDocument {
         }
     }
 
-    public MemberDocument(Member member, String typeFichier, String filename, String contentType, long size, byte[] content) {
+    public MemberDocument(Member member, String typeFichier, String filename, String contentType, long size, String storageKey) {
         this.member = member;
         this.typeFichier = typeFichier;
         this.filename = filename;
         this.contentType = contentType;
         this.size = size;
-        this.content = content;
+        this.storageKey = storageKey;
     }
 
     public Long getId() { return id; }
@@ -60,6 +62,9 @@ public class MemberDocument {
     public String getFilename() { return filename; }
     public String getContentType() { return contentType; }
     public long getSize() { return size; }
-    public byte[] getContent() { return content; }
+    public byte[] getLegacyContent() { return legacyContent; }
+    public void setLegacyContent(byte[] content) { this.legacyContent = content; }
+    public String getStorageKey() { return storageKey; }
+    public void setStorageKey(String storageKey) { this.storageKey = storageKey; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

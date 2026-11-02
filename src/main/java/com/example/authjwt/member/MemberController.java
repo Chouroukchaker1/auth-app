@@ -36,13 +36,15 @@ public class MemberController {
     private final MemberDocumentRepository documentRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final MemberFileStorage fileStorage;
 
     public MemberController(MemberRepository memberRepository, MemberDocumentRepository documentRepository,
-                             UserRepository userRepository, ObjectMapper objectMapper) {
+                             UserRepository userRepository, ObjectMapper objectMapper, MemberFileStorage fileStorage) {
         this.memberRepository = memberRepository;
         this.documentRepository = documentRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+        this.fileStorage = fileStorage;
     }
 
     @GetMapping
@@ -101,24 +103,27 @@ public class MemberController {
                                 Authentication authentication) throws IOException {
         Member member = findOrThrow(id);
         checkAccess(member, currentUser(authentication));
+        List<String> previousFiles = storedFileKeys(member);
         MemberDataDto dto = objectMapper.readValue(data, MemberDataDto.class);
         requireUnique(dto, id);
         applyData(member, dto);
         applyFiles(member, photo, carteSoins, carteMilitaire, documents, dto.typeFichier());
-        return MemberDetail.from(memberRepository.save(member));
+        Member saved = memberRepository.save(member);
+        deleteReplacedFiles(previousFiles, saved);
+        return MemberDetail.from(saved);
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id, Authentication authentication) {
+    public void delete(@PathVariable Long id, Authentication authentication) throws IOException {
         requireAdmin(currentUser(authentication));
-        if (!memberRepository.existsById(id)) {
-            throw notFound();
-        }
-        memberRepository.deleteById(id);
+        Member member = findOrThrow(id);
+        List<String> files = storedFileKeys(member);
+        memberRepository.delete(member);
+        files.forEach(this::deleteStoredFile);
     }
 
     @DeleteMapping("/{id}/documents/{docId}")
-    public void deleteDocument(@PathVariable Long id, @PathVariable Long docId, Authentication authentication) {
+    public void deleteDocument(@PathVariable Long id, @PathVariable Long docId, Authentication authentication) throws IOException {
         Member member = findOrThrow(id);
         checkAccess(member, currentUser(authentication));
         MemberDocument document = documentRepository.findById(docId)
@@ -126,29 +131,30 @@ public class MemberController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document introuvable"));
         member.getDocuments().remove(document);
         documentRepository.delete(document);
+        fileStorage.delete(document.getStorageKey());
     }
 
     @GetMapping("/{id}/photo")
-    public ResponseEntity<byte[]> photo(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<byte[]> photo(@PathVariable Long id, Authentication authentication) throws IOException {
         Member member = findOrThrow(id);
         checkAccess(member, currentUser(authentication));
-        if (member.getPhoto() == null) {
+        if (!member.hasPhoto()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Aucune photo");
         }
-        return binaryResponse(member.getPhoto(), member.getPhotoContentType());
+        return binaryResponse(readMemberFile(member.getPhotoStorageKey(), member.getLegacyPhoto()), member.getPhotoContentType());
     }
 
     @GetMapping("/{id}/card/{type}")
-    public ResponseEntity<byte[]> card(@PathVariable Long id, @PathVariable String type, Authentication authentication) {
+    public ResponseEntity<byte[]> card(@PathVariable Long id, @PathVariable String type, Authentication authentication) throws IOException {
         Member member = findOrThrow(id);
         checkAccess(member, currentUser(authentication));
         byte[] content;
         String contentType;
         if ("soins".equals(type)) {
-            content = member.getCarteSoins();
+            content = readMemberFile(member.getCarteSoinsStorageKey(), member.getLegacyCarteSoins());
             contentType = member.getCarteSoinsContentType();
         } else if ("militaire".equals(type)) {
-            content = member.getCarteMilitaire();
+            content = readMemberFile(member.getCarteMilitaireStorageKey(), member.getLegacyCarteMilitaire());
             contentType = member.getCarteMilitaireContentType();
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Type de carte invalide");
@@ -160,7 +166,7 @@ public class MemberController {
     }
 
     @GetMapping("/{id}/documents/{docId}")
-    public ResponseEntity<byte[]> document(@PathVariable Long id, @PathVariable Long docId, Authentication authentication) {
+    public ResponseEntity<byte[]> document(@PathVariable Long id, @PathVariable Long docId, Authentication authentication) throws IOException {
         Member member = findOrThrow(id);
         checkAccess(member, currentUser(authentication));
         MemberDocument document = documentRepository.findById(docId)
@@ -170,7 +176,10 @@ public class MemberController {
         headers.setContentType(document.getContentType() != null
                 ? MediaType.parseMediaType(document.getContentType()) : MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentDisposition(ContentDisposition.attachment().filename(document.getFilename()).build());
-        return new ResponseEntity<>(document.getContent(), headers, HttpStatus.OK);
+        byte[] content = document.getStorageKey() != null
+            ? fileStorage.read(document.getStorageKey()) : document.getLegacyContent();
+        if (content == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fichier introuvable");
+        return new ResponseEntity<>(content, headers, HttpStatus.OK);
     }
 
     private void requireUnique(MemberDataDto dto, Long currentId) {
@@ -210,23 +219,56 @@ public class MemberController {
     private void applyFiles(Member member, MultipartFile photo, MultipartFile carteSoins, MultipartFile carteMilitaire,
                              List<MultipartFile> documents, String typeFichier) throws IOException {
         if (photo != null && !photo.isEmpty()) {
-            member.setPhoto(photo.getBytes());
+            member.setPhotoStorageKey(fileStorage.store(member.getNumeroUnifie(), "photo", photo.getOriginalFilename(), photo.getBytes()));
+            member.setLegacyPhoto(null);
             member.setPhotoContentType(photo.getContentType());
         }
         if (carteSoins != null && !carteSoins.isEmpty()) {
-            member.setCarteSoins(carteSoins.getBytes());
+            member.setCarteSoinsStorageKey(fileStorage.store(member.getNumeroUnifie(), "carte-soins", carteSoins.getOriginalFilename(), carteSoins.getBytes()));
+            member.setLegacyCarteSoins(null);
             member.setCarteSoinsContentType(carteSoins.getContentType());
         }
         if (carteMilitaire != null && !carteMilitaire.isEmpty()) {
-            member.setCarteMilitaire(carteMilitaire.getBytes());
+            member.setCarteMilitaireStorageKey(fileStorage.store(member.getNumeroUnifie(), "carte-militaire", carteMilitaire.getOriginalFilename(), carteMilitaire.getBytes()));
+            member.setLegacyCarteMilitaire(null);
             member.setCarteMilitaireContentType(carteMilitaire.getContentType());
         }
         if (documents != null) {
             for (MultipartFile file : documents) {
                 if (file.isEmpty()) continue;
+                String storageKey = fileStorage.store(member.getNumeroUnifie(), "document", file.getOriginalFilename(), file.getBytes());
                 member.getDocuments().add(new MemberDocument(member, typeFichier, file.getOriginalFilename(),
-                        file.getContentType(), file.getSize(), file.getBytes()));
+                        file.getContentType(), file.getSize(), storageKey));
             }
+        }
+    }
+
+    private byte[] readMemberFile(String storageKey, byte[] legacyContent) throws IOException {
+        if (storageKey != null) return fileStorage.read(storageKey);
+        return legacyContent;
+    }
+
+    private List<String> storedFileKeys(Member member) {
+        List<String> keys = new ArrayList<>();
+        keys.add(member.getPhotoStorageKey());
+        keys.add(member.getCarteSoinsStorageKey());
+        keys.add(member.getCarteMilitaireStorageKey());
+        member.getDocuments().stream().map(MemberDocument::getStorageKey).forEach(keys::add);
+        return keys;
+    }
+
+    private void deleteReplacedFiles(List<String> previousFiles, Member saved) throws IOException {
+        List<String> currentFiles = storedFileKeys(saved);
+        for (String key : previousFiles) {
+            if (key != null && !currentFiles.contains(key)) fileStorage.delete(key);
+        }
+    }
+
+    private void deleteStoredFile(String key) {
+        try {
+            fileStorage.delete(key);
+        } catch (IOException exception) {
+            throw new java.io.UncheckedIOException(exception);
         }
     }
 
@@ -289,8 +331,8 @@ record MemberDetail(Long id, String numeroUnifie, String cnr, String numeroAffil
         return new MemberDetail(member.getId(), member.getNumeroUnifie(), member.getCnr(), member.getNumeroAffiliation(),
                 member.getTypeService(), member.getNomPrenom(), member.getGrade(), member.getDateNaissance(),
                 member.getLieuNaissance(), member.getDebutActivite(), member.getStatut(), member.getEtatCivil(),
-                member.getDateMariage(), member.getPhoto() != null, member.getCarteSoins() != null,
-                member.getCarteMilitaire() != null, new ArrayList<>(family), new ArrayList<>(docs));
+                member.getDateMariage(), member.hasPhoto(), member.hasCarteSoins(),
+                member.hasCarteMilitaire(), new ArrayList<>(family), new ArrayList<>(docs));
     }
 }
 

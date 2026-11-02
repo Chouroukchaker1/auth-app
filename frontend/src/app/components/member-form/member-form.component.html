@@ -7,8 +7,11 @@
     }
     <form class="page" [formGroup]="form" (ngSubmit)="save()" novalidate [class.is-loading]="loading">
       <header class="page-title">
-        <h1>نوع الطلب : {{ requestType.ar }}</h1>
-        <p>Type de demande : {{ requestType.fr }}</p>
+        <div class="page-title__text">
+          <h1>نوع الطلب : {{ requestType.ar }}</h1>
+          <p>Type de demande : {{ requestType.fr }}</p>
+        </div>
+        <button class="btn btn--outline btn--scan" type="button" (click)="openAnalysis()" title="قراءة استمارة ورقية وملء هذا الملف / Lire un formulaire papier et remplir cette fiche"><svg class="btn__ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8V5.5a2 2 0 0 1 2-2H8M16 3.5h2.5a2 2 0 0 1 2 2V8M20.5 16v2.5a2 2 0 0 1-2 2H16M8 20.5H5.5a2 2 0 0 1-2-2V16M7 12h10"/></svg><span>تحليل وثيقة / Analyser un document</span></button>
       </header>
 
       @if (saved) { <div class="success" role="status">{{ savedMessage }}</div> }

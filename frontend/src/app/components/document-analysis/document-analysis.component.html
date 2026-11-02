@@ -1,0 +1,196 @@
+<div class="analysis-page" dir="rtl">
+  <app-topbar [fullName]="session.fullName" [subtitle]="session.subtitle" />
+
+  <main>
+    <header class="page-title">
+      <div class="page-title__text">
+        <h1>تحليل وثيقة</h1>
+        <p>Analyse de document</p>
+      </div>
+      <button class="btn btn--outline" type="button" (click)="back()">
+        <svg class="btn__ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <span>رجوع إلى الاستمارة / Retour au formulaire</span>
+      </button>
+    </header>
+
+    @if (errorMessage) { <div class="error" role="alert">{{ errorMessage }}</div> }
+
+    @if (!data) {
+      <section class="card" aria-labelledby="doc-title">
+        <h2 class="card-head" id="doc-title">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8V5.5a2 2 0 0 1 2-2H8M16 3.5h2.5a2 2 0 0 1 2 2V8M20.5 16v2.5a2 2 0 0 1-2 2H16M8 20.5H5.5a2 2 0 0 1-2-2V16M7 12h10"/></svg>
+          <span class="card-head__divider" aria-hidden="true"></span>
+          الوثيقة / Document
+        </h2>
+
+        <div class="card-body">
+          @if (!running) {
+            <label class="dropzone" [class.dropzone--over]="dragging" (dragover)="onDragOver($event)" (dragleave)="dragging = false" (drop)="onDrop($event)">
+              <input class="visually-hidden" type="file" accept="image/*,application/pdf" (change)="onFile($event)" />
+              <svg class="dropzone__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+              <strong>اسحب صورة الاستمارة أو ملف PDF هنا، أو انقر للاختيار</strong>
+              <span>Glissez la photo du formulaire ou un PDF ici, ou cliquez pour choisir (10 Mo max.)</span>
+            </label>
+          }
+
+          @if (file) {
+            <div class="picked">
+              @if (previewUrl) {
+                <img class="picked__preview" [src]="previewUrl" [alt]="'Aperçu de ' + file.name" />
+              } @else {
+                <div class="picked__pdf" aria-hidden="true">PDF</div>
+              }
+              <div class="picked__info">
+                <strong>{{ file.name }}</strong>
+                <span dir="ltr">{{ fileSize }}</span>
+                @if (!running && !job) {
+                  <button class="btn btn--dark" type="button" (click)="analyse()">
+                    <svg class="btn__ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8V5.5a2 2 0 0 1 2-2H8M16 3.5h2.5a2 2 0 0 1 2 2V8M20.5 16v2.5a2 2 0 0 1-2 2H16M8 20.5H5.5a2 2 0 0 1-2-2V16M7 12h10"/></svg>
+                    <span>تحليل / Analyser</span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (running && job) {
+            <div class="progress" role="status" aria-live="polite">
+              <div class="progress__head">
+                <strong>
+                  @if (job.status === 'queued' && job.position > 0) {
+                    في الانتظار ({{ job.position }}) / En attente : {{ job.position }} analyse(s) avant la vôtre
+                  } @else {
+                    جارٍ التحليل / Analyse en cours
+                  }
+                </strong>
+                <span dir="ltr">{{ job.progress }}% · {{ elapsed }} s</span>
+              </div>
+              <div class="progress__bar" role="progressbar" [attr.aria-valuenow]="job.progress" aria-valuemin="0" aria-valuemax="100">
+                <span [style.width.%]="job.progress"></span>
+              </div>
+              <p class="progress__message" dir="auto">{{ job.message }}</p>
+              <p class="progress__hint">قد يستغرق التحليل بضع دقائق، يمكنك مغادرة الصفحة والعودة لاحقًا / L'analyse prend quelques minutes ; vous pouvez quitter la page et revenir.</p>
+            </div>
+          }
+        </div>
+      </section>
+    } @else {
+      <div class="stats">
+        <div class="stat"><span>الحقول المقروءة / Champs lus</span><strong>{{ data.fields.length }}</strong></div>
+        <div class="stat"><span>أسطر الجدول / Lignes du tableau</span><strong>{{ data.table.rows.length }}</strong></div>
+        <div class="stat" [class.stat--warn]="toCheck > 0"><span>للتثبت / À vérifier</span><strong>{{ toCheck }}</strong></div>
+        <div class="stat"><span>المدة / Durée</span><strong dir="ltr">{{ job?.seconds ?? data.seconds }} s</strong></div>
+      </div>
+
+      <p class="legend">
+        <span class="swatch swatch--low"></span> ثقة ضعيفة، يرجى التثبت / confiance faible, à vérifier
+        <span class="swatch swatch--medium"></span> ثقة متوسطة / moyenne
+        · 〃 = نفس القيمة / même valeur qu'au-dessus · يمكن تعديل كل خانة / chaque case est modifiable
+      </p>
+
+      <div class="results">
+        <section class="card page-card" aria-labelledby="page-title">
+          <h2 class="card-head" id="page-title">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+            <span class="card-head__divider" aria-hidden="true"></span>
+            الصفحة المقروءة / Page lue
+          </h2>
+          <div class="card-body page-card__body">
+            @if (pageUrl) {
+              <img [src]="pageUrl" [alt]="'Page analysée : ' + data.source" />
+            } @else {
+              <p class="empty">جارٍ التحميل... / Chargement...</p>
+            }
+          </div>
+        </section>
+
+        <div class="results__data">
+          <section class="card" aria-labelledby="fields-title">
+            <h2 class="card-head" id="fields-title">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>
+              <span class="card-head__divider" aria-hidden="true"></span>
+              الحقول / Champs
+            </h2>
+            <div class="card-body">
+              @if (data.fields.length) {
+                <div class="table-wrap">
+                  <table class="fields">
+                    <thead>
+                      <tr>
+                        <th>الحقل<span>Champ</span></th>
+                        <th>القيمة<span>Valeur</span></th>
+                        <th>الثقة<span>Confiance</span></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (field of data.fields; track $index; let i = $index) {
+                        <tr [class]="tone(field.conf, field.value)">
+                          <td><input dir="auto" [value]="field.label" (change)="editField(i, 'label', $event)" [attr.aria-label]="'Champ ' + (i + 1)" /></td>
+                          <td>
+                            <input dir="auto" [value]="field.value" (change)="editField(i, 'value', $event)" [attr.aria-label]="'Valeur de ' + field.label" />
+                            @if (field.note) { <small dir="auto">{{ field.note }}</small> }
+                          </td>
+                          <td class="conf" dir="ltr">{{ percent(field.conf) }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <p class="empty">لم تتم قراءة أي حقل / Aucun champ lu</p>
+              }
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="table-title">
+            <h2 class="card-head" id="table-title">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg>
+              <span class="card-head__divider" aria-hidden="true"></span>
+              الجدول / Tableau
+            </h2>
+            <div class="card-body">
+              @if (data.table.rows.length) {
+                <div class="table-wrap">
+                  <table class="grid">
+                    <thead>
+                      <tr>@for (c of columns; track c) { <th dir="auto">{{ data.table.headers[c] }}</th> }</tr>
+                    </thead>
+                    <tbody>
+                      @for (row of data.table.rows; track $index; let r = $index) {
+                        <tr>
+                          @for (c of columns; track c) {
+                            @if (data.table.headers[c] === 'N°') {
+                              <td class="num">{{ row[c].text }}</td>
+                            } @else {
+                              <td [class]="tone(row[c].conf, row[c].text)" [title]="row[c].note">
+                                <input dir="auto" [value]="row[c].text" (change)="editCell(r, c, $event)" [attr.aria-label]="data.table.headers[c] + ', ligne ' + (r + 1)" />
+                              </td>
+                            }
+                          }
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <p class="empty">لا يوجد جدول في هذه الوثيقة / Aucun tableau dans ce document</p>
+              }
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn--dark" type="button" (click)="fillForm()" [disabled]="sending">
+          <svg class="btn__ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+          <span>{{ sending ? 'جارٍ التحضير... / Préparation...' : 'ملء الاستمارة / Remplir le formulaire' }}</span>
+        </button>
+        <button class="btn btn--outline" type="button" (click)="reset()" [disabled]="sending">
+          <span>تحليل وثيقة أخرى / Analyser un autre document</span>
+        </button>
+      </div>
+    }
+  </main>
+
+  <app-site-footer />
+</div>

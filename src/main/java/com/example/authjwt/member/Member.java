@@ -43,16 +43,22 @@ public class Member {
     private String etatCivil;
     private LocalDate dateMariage;
 
-    @Column(columnDefinition = "bytea")
-    private byte[] photo;
+    @Column(name = "photo", columnDefinition = "bytea")
+    private byte[] legacyPhoto;
+    @Column(name = "photo_storage_key")
+    private String photoStorageKey;
     private String photoContentType;
 
-    @Column(columnDefinition = "bytea")
-    private byte[] carteSoins;
+    @Column(name = "carte_soins", columnDefinition = "bytea")
+    private byte[] legacyCarteSoins;
+    @Column(name = "carte_soins_storage_key")
+    private String carteSoinsStorageKey;
     private String carteSoinsContentType;
 
-    @Column(columnDefinition = "bytea")
-    private byte[] carteMilitaire;
+    @Column(name = "carte_militaire", columnDefinition = "bytea")
+    private byte[] legacyCarteMilitaire;
+    @Column(name = "carte_militaire_storage_key")
+    private String carteMilitaireStorageKey;
     private String carteMilitaireContentType;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -91,16 +97,25 @@ public class Member {
     public LocalDate getDateMariage() { return dateMariage; }
     public void setDateMariage(LocalDate dateMariage) { this.dateMariage = dateMariage; }
 
-    public byte[] getPhoto() { return photo; }
-    public void setPhoto(byte[] photo) { this.photo = photo; }
+    public byte[] getLegacyPhoto() { return legacyPhoto; }
+    public void setLegacyPhoto(byte[] photo) { this.legacyPhoto = photo; }
+    public String getPhotoStorageKey() { return photoStorageKey; }
+    public void setPhotoStorageKey(String photoStorageKey) { this.photoStorageKey = photoStorageKey; }
+    public boolean hasPhoto() { return photoStorageKey != null || legacyPhoto != null; }
     public String getPhotoContentType() { return photoContentType; }
     public void setPhotoContentType(String photoContentType) { this.photoContentType = photoContentType; }
-    public byte[] getCarteSoins() { return carteSoins; }
-    public void setCarteSoins(byte[] carteSoins) { this.carteSoins = carteSoins; }
+    public byte[] getLegacyCarteSoins() { return legacyCarteSoins; }
+    public void setLegacyCarteSoins(byte[] carteSoins) { this.legacyCarteSoins = carteSoins; }
+    public String getCarteSoinsStorageKey() { return carteSoinsStorageKey; }
+    public void setCarteSoinsStorageKey(String carteSoinsStorageKey) { this.carteSoinsStorageKey = carteSoinsStorageKey; }
+    public boolean hasCarteSoins() { return carteSoinsStorageKey != null || legacyCarteSoins != null; }
     public String getCarteSoinsContentType() { return carteSoinsContentType; }
     public void setCarteSoinsContentType(String carteSoinsContentType) { this.carteSoinsContentType = carteSoinsContentType; }
-    public byte[] getCarteMilitaire() { return carteMilitaire; }
-    public void setCarteMilitaire(byte[] carteMilitaire) { this.carteMilitaire = carteMilitaire; }
+    public byte[] getLegacyCarteMilitaire() { return legacyCarteMilitaire; }
+    public void setLegacyCarteMilitaire(byte[] carteMilitaire) { this.legacyCarteMilitaire = carteMilitaire; }
+    public String getCarteMilitaireStorageKey() { return carteMilitaireStorageKey; }
+    public void setCarteMilitaireStorageKey(String carteMilitaireStorageKey) { this.carteMilitaireStorageKey = carteMilitaireStorageKey; }
+    public boolean hasCarteMilitaire() { return carteMilitaireStorageKey != null || legacyCarteMilitaire != null; }
     public String getCarteMilitaireContentType() { return carteMilitaireContentType; }
     public void setCarteMilitaireContentType(String carteMilitaireContentType) { this.carteMilitaireContentType = carteMilitaireContentType; }
 
